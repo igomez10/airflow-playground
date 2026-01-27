@@ -82,9 +82,13 @@ docker compose down -v
 
 DAGs are Python files placed in the `dags/` directory. They are automatically detected by the scheduler.
 
+### Existing Example
+
+See `dags/example_dag.py` for a working example with Python and Bash operators.
+
 ### Basic DAG Template
 
-Create a new file in `dags/`, e.g., `dags/my_dag.py`:
+Create a new file in `dags/`, replacing `<your_dag_name>` with your DAG's name:
 
 ```python
 from datetime import datetime, timedelta
@@ -106,9 +110,9 @@ def my_python_function():
 
 # Define the DAG
 with DAG(
-    dag_id='my_dag',
+    dag_id='<your_dag_name>',  # Change this to your DAG name
     default_args=default_args,
-    description='My custom DAG',
+    description='Your DAG description',
     start_date=datetime(2024, 1, 1),
     schedule=timedelta(days=1),  # Run daily
     catchup=False,
@@ -170,10 +174,13 @@ docker compose logs -f scheduler
 
 # Run Airflow CLI commands
 docker compose exec airflow-webserver airflow dags list
-docker compose exec airflow-webserver airflow tasks list my_dag
+docker compose exec airflow-webserver airflow tasks list example_dag
 
 # Trigger a DAG manually
-docker compose exec airflow-webserver airflow dags trigger my_dag
+docker compose exec airflow-webserver airflow dags trigger example_dag
+
+# Trigger your own DAG (replace <dag_id> with your DAG name)
+docker compose exec airflow-webserver airflow dags trigger <dag_id>
 
 # Check service health
 docker compose ps
