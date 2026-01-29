@@ -1,6 +1,6 @@
 # Distributed Databases - Airflow Setup
 
-This project provides a production-ready Apache Airflow 2.8.1 setup using Docker Compose with CeleryExecutor for distributed task execution.
+This project provides a production-ready Apache Airflow 3.x setup using Docker Compose with CeleryExecutor for distributed task execution.
 
 ## Architecture
 
@@ -8,8 +8,9 @@ This project provides a production-ready Apache Airflow 2.8.1 setup using Docker
 |---------|-------------|------|
 | PostgreSQL 15 | Metadata database | 5432 |
 | Redis 7 | Celery message broker | 6379 |
-| Airflow Webserver | Web UI | 8080 |
+| Airflow API Server | Web UI and REST API | 8080 |
 | Airflow Scheduler | DAG scheduling | 8974 |
+| Airflow DAG Processor | DAG parsing | - |
 | Airflow Worker | Task execution | - |
 | Airflow Triggerer | Async triggers | - |
 | Flower (optional) | Celery monitoring | 5555 |
@@ -169,18 +170,18 @@ task_1 >> [task_2, task_3]
 
 ```bash
 # View logs
-docker compose logs -f webserver
-docker compose logs -f scheduler
+docker compose logs -f airflow-apiserver
+docker compose logs -f airflow-scheduler
 
 # Run Airflow CLI commands
-docker compose exec airflow-webserver airflow dags list
-docker compose exec airflow-webserver airflow tasks list example_dag
+docker compose exec airflow-apiserver airflow dags list
+docker compose exec airflow-apiserver airflow tasks list example_dag
 
 # Trigger a DAG manually
-docker compose exec airflow-webserver airflow dags trigger example_dag
+docker compose exec airflow-apiserver airflow dags trigger example_dag
 
 # Trigger your own DAG (replace <dag_id> with your DAG name)
-docker compose exec airflow-webserver airflow dags trigger <dag_id>
+docker compose exec airflow-apiserver airflow dags trigger <dag_id>
 
 # Check service health
 docker compose ps
@@ -198,7 +199,7 @@ docker compose logs airflow-init
 ### DAG not appearing in UI
 
 1. Check for syntax errors in your DAG file
-2. View scheduler logs: `docker compose logs scheduler`
+2. View scheduler logs: `docker compose logs airflow-scheduler`
 3. Ensure the file is in the `dags/` directory
 
 ### Task failures
@@ -214,4 +215,4 @@ Key environment variables (set in docker-compose.yml):
 | `AIRFLOW__CORE__EXECUTOR` | CeleryExecutor | Distributed execution |
 | `AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION` | true | New DAGs start paused |
 | `AIRFLOW__CORE__LOAD_EXAMPLES` | false | Don't load example DAGs |
-| `AIRFLOW__API__AUTH_BACKENDS` | basic_auth,session | API authentication |
+| `AIRFLOW__CORE__AUTH_MANAGER` | FabAuthManager | Authentication manager |
