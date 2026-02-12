@@ -36,6 +36,14 @@ services:
     container_name: setup-distribdatabases
     command: ["sh", "-c", "chmod +x /setup/init.sh && /setup/init.sh"]
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
     environment:
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -44,12 +52,15 @@ services:
       AIRFLOW__CORE__FERNET_KEY: ""
     volumes:
       - ./setup:/setup
+      - ./data:/data:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
       postgres-db-example:
+        condition: service_started
+      mongodb:
         condition: service_started
 
   postgres:
@@ -66,6 +77,14 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   redis:
     image: redis:7.2-bookworm
@@ -78,6 +97,14 @@ services:
       retries: 50
       start_period: 30s
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   airflow-apiserver:
     <<: *airflow-common
@@ -95,6 +122,14 @@ services:
       <<: *airflow-common-depends-on
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   airflow-scheduler:
     <<: *airflow-common
@@ -110,6 +145,14 @@ services:
       <<: *airflow-common-depends-on
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -129,6 +172,14 @@ services:
       <<: *airflow-common-depends-on
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   airflow-worker:
     <<: *airflow-common
@@ -151,6 +202,14 @@ services:
         condition: service_healthy
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "1"
+          memory: 1G
 
   airflow-triggerer:
     <<: *airflow-common
@@ -170,6 +229,14 @@ services:
       <<: *airflow-common-depends-on
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   airflow-cli:
     <<: *airflow-common
@@ -182,6 +249,14 @@ services:
       - bash
       - -c
       - airflow
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   flower:
     <<: *airflow-common
@@ -201,6 +276,14 @@ services:
       <<: *airflow-common-depends-on
       setup:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   postgres-db-example:
     image: postgres:15
@@ -210,6 +293,31 @@ services:
       POSTGRES_DB: example
     ports:
       - "5433:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  mongodb:
+    image: mongo:8.2.3
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-volume:/data/db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
 volumes:
+  mongodb-volume:
   postgres-db-volume:
